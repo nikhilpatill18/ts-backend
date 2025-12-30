@@ -1,0 +1,26 @@
+import { NextFunction, Request, Response } from "express";
+import { Users } from "../models/user.model";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv"
+import AppError from "../utils/appError";
+dotenv.config();
+const secret:string|any=process.env.JWT_SECRET
+
+const authMiddleware=async(req:Request,res:Response,next:NextFunction)=>{
+    try {
+        const token=req.cookies.get("jwt")||req.headers.authorization?.replace("Bearer ","");
+        if(!token) return res.status(401).json({success:false,message:"Unauthorized token"});
+        const {id,email}= jwt.verify(token,secret);
+        // check the user is there with the email and id
+
+        const user=await Users.findOne({where:{id:id,email:email},raw:true});
+        if(!user){
+            return res.status(404).json({success:false,message:"user not found"})
+        }
+        req.user=user;
+    } catch (error) {
+        next(new AppError("Server error",500));
+    }
+}
+
+export { authMiddleware}
