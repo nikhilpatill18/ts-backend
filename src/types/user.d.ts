@@ -20,7 +20,7 @@ interface UserDetails{
 }
 
 interface userData {
-  id?: number;
+  id?: string;
   firstName: string;
   lastname: string;
   fullName?:string;

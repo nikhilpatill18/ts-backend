@@ -10,7 +10,11 @@ const authMiddleware=async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const token=req.cookies.jwt||req.headers.authorization?.replace("Bearer ","");
         if(!token) return res.status(401).json({success:false,message:"Unauthorized token"});
-        const {id,email}= jwt.verify(token,secret);
+
+        // type of payload
+        type payload={id:string|any,email:string};
+        
+        const {id,email}:payload|any= jwt.verify(token,secret);
         // check the user is there with the email and id
 
         const user=await Users.findOne({where:{id:id,email:email},raw:true});

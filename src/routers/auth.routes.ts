@@ -9,7 +9,7 @@ const authRouter=Router();
 
 authRouter.route('/create-user').post(createUserValdations,validate,signup);
 authRouter.route('/login-user').post(loginUserValidators,validate,login);
-authRouter.route('/get-user/:userId').get(getUserDetails);
+authRouter.route('/get-user/:userId').get(authMiddleware,getUserDetails);
 authRouter.route('/complete-user-profile').post(authMiddleware,completeProfileValidators,validate,completeProfile);
 
 

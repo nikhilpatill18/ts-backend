@@ -12,7 +12,8 @@ dotenv.config();
 const createSendCookie = async (res: Response, user: userData,message:string,status?:number) => {
   try {
     const secret:any|string=process.env.JWT_SECERET
-    const token = jwt.sign({ id: user.id,email:user.email }, secret, { expiresIn: "10d" });
+    const payload:{id:string|any,email:string}={ id: user.id,email:user.email }
+    const token = jwt.sign(payload, secret, { expiresIn: "10d" });
     return res
       .status(status||200)
       .cookie("jwt", token)
