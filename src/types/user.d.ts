@@ -1,4 +1,4 @@
-interface previousExperienc{
+interface previousExperience{
     company:string;
     role:string;
     year:number
@@ -12,7 +12,7 @@ interface UserDetails{
   postGraduation?:string;
   postGraduationYear?:string;
   resume:string;
-  previousExperiece:previousExperienc[];
+  previousExperiece:previousExperience[];
   state:string;
   city:string;
   skills:string[];

@@ -6,7 +6,7 @@ const User_Profile = sequelize.define(
   {
     id: {
       type: DataTypes.UUID,
-      defaultValue:DataTypes.UUID,
+      defaultValue:DataTypes.UUIDV4,
       primaryKey:true
     },
 
@@ -23,7 +23,7 @@ const User_Profile = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-     underGraduationyear: {
+     underGraduationYear: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -41,7 +41,7 @@ const User_Profile = sequelize.define(
       allowNull: false,
     },
 
-    previousExperience: {
+    previousExperiece: {
       type: DataTypes.JSON,
       allowNull: true,
     },

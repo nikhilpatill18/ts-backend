@@ -16,6 +16,12 @@ export const createUserValdations = [
     .notEmpty()
     .isLength({ min: 6 })
     .withMessage("pasword is required"),
+  body("phoneNumber")
+    .trim()
+    .notEmpty()
+    .withMessage("Phonenumber could not be empty")
+    .isLength({min:10})
+    .withMessage("Phone number should me 10 digit")
 ];
 
 

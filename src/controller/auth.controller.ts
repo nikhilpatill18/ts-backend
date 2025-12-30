@@ -9,12 +9,12 @@ import AppError from "../utils/appError";
 dotenv.config();
 
 
-const createSendCookie = async (res: Response, user: userData,message:string) => {
+const createSendCookie = async (res: Response, user: userData,message:string,status?:number) => {
   try {
     const secret:any|string=process.env.JWT_SECERET
     const token = jwt.sign({ id: user.id,email:user.email }, secret, { expiresIn: "10d" });
     return res
-      .status(200)
+      .status(status||200)
       .cookie("jwt", token)
       .json({ success: true, data: user,message:message });
   } catch (error) {
@@ -27,7 +27,7 @@ const createSendCookie = async (res: Response, user: userData,message:string) =>
 const signup = async (req: Request, res: Response,next:NextFunction) => {
   try {
     const data: userData = req.body;
-    const user = await Users.create({ ...data });
+    const user = await Users.create({ ...data,isVerified:true });
     if (!user) {
       return res.status(500).json({ message: "server prblm" });
     }
@@ -47,7 +47,7 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
     // get the user data based on the email
     const user = await Users.findOne<userData | any>({
       where: { email: data.email },
-      raw: true,
+      // raw: true,
       include:[{
         model:User_Profile,
         as:"user_details"
@@ -65,12 +65,10 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
       
     // check the profile completed
     const isProfileCompleted=user.isProfileCompleted;
-
     // return error if the profile is completed
     if(!isProfileCompleted)
-      next(new AppError("User Profile is not Completed",400))
+     return createSendCookie(res,user,"User Profile is not Completed",400);
     
-
     // make the user password undifned before sending the response
     user.password = undefined;
     // create the token and send to yuser
@@ -78,6 +76,8 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
   } 
   
   catch (error) {
+    console.log(error);
+    
    next(new AppError("Server error",500));
   }
 };
@@ -102,14 +102,19 @@ const completeProfile=async(req:Request,res:Response,next:NextFunction)=>{
     if(!userProfile)
       next(new AppError("Something went wrong",500));
 
+    // console.log(user);
+    await Users.update({isProfileCompleted:true},{where:{id:id}})
+    
     // get the user details
-    const user:userData=await Users.findOne<userData|any>({where:{id:id,email:email},raw:true,include:{
+    const user:userData=await Users.findOne<userData|any>({where:{id:id,email:email},include:{
       model:User_Profile,
       as:"user_details"
     }});
     // create the send the token 
     createSendCookie(res,user,"user Profile created")
   } catch (error) {
+    console.log(error);
+    
     next(new AppError("Server Error",500));
   }
 }
@@ -125,7 +130,7 @@ const getUserDetails=async(req:Request,res:Response,next:NextFunction)=>{
    const user:userData=await Users.findOne<userData|any>({where:{id:userId},include:{
     model:User_Profile,
     as:"user_details"
-     },raw:true});
+     }});
    if(!user)
     next(new AppError("User not found",404));
     

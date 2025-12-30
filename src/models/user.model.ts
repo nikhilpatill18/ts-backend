@@ -6,9 +6,10 @@ const Users = sequelize.define(
   "Users",
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      // autoIncrement: true,
       primaryKey: true,
+      defaultValue:DataTypes.UUIDV4
     },
 
     firstName: {
