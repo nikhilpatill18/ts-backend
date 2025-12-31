@@ -15,7 +15,7 @@ const connectDb = async (): Promise<void> => {
     console.error("Unable to connect to the database:", error);
   }
 };
-app.listen(PORT, async () => {
+app.listen(3001 ,"0.0.0.0", async () => { 
   console.log(`server started running on ${PORT}`);
   await connectDb();
   // await createUser();

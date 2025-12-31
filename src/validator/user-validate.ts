@@ -26,7 +26,10 @@ export const createUserValdations = [
 
 
 export const loginUserValidators=[
-  body("email").trim().notEmpty().isEmail().withMessage("Please Enter the valid email"),
+  body("email").trim().notEmpty().isEmail().withMessage("Please Enter the valid email").custom(async (email) => {
+      const user = await Users.findOne({ where: { email } });
+      if (!user) throw new Error("email does't exists");
+    }),
   body("password").trim().notEmpty().withMessage("password is required").isLength({min:6}).withMessage("minium length required is 6")
 ]
 

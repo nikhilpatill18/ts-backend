@@ -6,14 +6,15 @@ import { User_Profile } from "../models/user_profile.model";
 import dotenv from 'dotenv'
 import { userData,UserDetails } from "../types/user";
 import AppError from "../utils/appError";
+import { generateOtp } from "../utils/generateotp";
+import { body } from "express-validator";
 dotenv.config();
 
 
 const createSendCookie = async (res: Response, user: userData,message:string,status?:number) => {
   try {
     const secret:any|string=process.env.JWT_SECERET
-    const payload:{id:string|any,email:string}={ id: user.id,email:user.email }
-    const token = jwt.sign(payload, secret, { expiresIn: "10d" });
+    const token = jwt.sign({ id: user.id,email:user.email }, secret, { expiresIn: "10d" });
     return res
       .status(status||200)
       .cookie("jwt", token)
@@ -43,8 +44,11 @@ const signup = async (req: Request, res: Response,next:NextFunction) => {
 // logini user
 const login = async (req: Request, res: Response,next:NextFunction) => {
   try {
+    console.log(req.body);
+    
     const data: { email: string; password: string } = req.body;
-
+    
+    
     // get the user data based on the email
     const user = await Users.findOne<userData | any>({
       where: { email: data.email },
@@ -54,15 +58,16 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
         as:"user_details"
       }]
     });
+    console.log(data.password,user.password);
 
     // if not return error
     if (!user) 
-      next(new AppError("User not found",404));
+     return next(new AppError("User not found",404));
 
     // check the password is correct or not
-    const isUser = bcryptjs.compare(data.password,user.password);
+    const isUser = await bcryptjs.compare(data.password,user.password);
     if (!isUser)  
-      next(new AppError("Unauthorized Request",401));
+     return next(new AppError("Unauthorized Request",401));
       
     // check the profile completed
     const isProfileCompleted=user.isProfileCompleted;
@@ -84,8 +89,70 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
 };
 
 
-// complete user profile
+// send-otp
+const send_otp=async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    // get the user data from the middleware
+    const user=req.user;
+    
+    // generate thye opt 
+    const otp:string=generateOtp();
+    const userData=await Users.findOne<userData|any>({where:{id:user.id},include:{model:User_Profile,as:"user_details"}});
+    userData.otp=otp;
+    userData.otpExpiry=Date.now()+60000;
+    userData?.save();
+    console.log(otp);
+    
+    return res.status(200).json({message:"Otp Shared SUccessFully"})
+  } catch (error) {
+    next(new AppError("Error in otp",500));
+  }
+}
 
+// verify-otp
+const verify_opt=async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const data:{otp:string}=req.body;
+    console.log(req.body);
+    
+    const {id,email}=req.user;
+    const userData=await Users.findOne<userData|any>({where:{id:id,email:email}});
+    
+    // otp stored in the database
+    const realOtp=userData.otp;
+    
+    // check the otp is correct
+    const isOtpCorrect=realOtp===data.otp;
+    console.log(realOtp,data.otp);
+    
+
+    if(!isOtpCorrect){
+      return next(new AppError("Please Enter valid otp",400));
+    }
+    // check the is time expired
+    const currtime=Date.now();
+    const expiryTime=userData.otpExpiry;
+    
+    //return error if time is over 
+    if(!(currtime<expiryTime)){
+        return next(new AppError("Opt expired",400));
+      }
+    userData.otp=null;
+    userData.otpExpiry=null;
+    userData.isVerified=true;
+    userData?.save();
+    userData.password=undefined;
+    userData.otp=undefined;
+    userData.otpExpiry=undefined;
+    createSendCookie(res,userData,"opt verified",200)
+  } catch (error) {
+    console.log(error);
+    next(new AppError("Not able to verify the otp",500));
+  }
+}
+
+
+// complete user profile
 const completeProfile=async(req:Request,res:Response,next:NextFunction)=>{
   try {
     const {id,email}=req.user;
@@ -144,4 +211,4 @@ const getUserDetails=async(req:Request,res:Response,next:NextFunction)=>{
   }
 }
 
-export { signup, login ,getUserDetails,completeProfile};
+export { signup, login ,getUserDetails,completeProfile,send_otp,verify_opt};
