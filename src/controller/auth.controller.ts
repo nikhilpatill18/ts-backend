@@ -7,7 +7,6 @@ import dotenv from 'dotenv'
 import { userData,UserDetails } from "../types/user";
 import AppError from "../utils/appError";
 import { generateOtp } from "../utils/generateotp";
-import { body } from "express-validator";
 dotenv.config();
 
 
@@ -29,7 +28,7 @@ const createSendCookie = async (res: Response, user: userData,message:string,sta
 const signup = async (req: Request, res: Response,next:NextFunction) => {
   try {
     const data: userData = req.body;
-    const user = await Users.create({ ...data,isVerified:true });
+    const user = await Users.create({ ...data,isVerified:false });
     if (!user) {
       return res.status(500).json({ message: "server prblm" });
     }
@@ -211,4 +210,34 @@ const getUserDetails=async(req:Request,res:Response,next:NextFunction)=>{
   }
 }
 
-export { signup, login ,getUserDetails,completeProfile,send_otp,verify_opt};
+
+// user/me
+
+const authME=async(req:Request,res:Response,next:NextFunction)=>{
+  //  get the user form the database
+  try {
+  // id from the params
+  // console.log(req.body);
+  
+   const {id:userId}=req.user;
+
+  //  get the user form the database
+   const user:userData=await Users.findOne<userData|any>({where:{id:userId},include:{
+    model:User_Profile,
+    as:"user_details"
+     }});
+   if(!user)
+    next(new AppError("User not found",404));
+    
+    // make the user password undifned before sending the response
+    user.password=undefined;
+    // return the response
+    return res.status(200).json({message:"success",data:user})
+  } catch (error) {
+    console.log(error);
+    
+   next(new AppError("Server error",500));
+  }
+}
+
+export { signup, login ,getUserDetails,completeProfile,send_otp,verify_opt,authME};
