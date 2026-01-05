@@ -1,4 +1,4 @@
-import { NextFunction, Response,Request } from "express";
+import { NextFunction, Response,Request } from 'express';
 
 
 export default async(err:any,req:Request,res:Response,next:NextFunction)=>{

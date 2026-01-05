@@ -1,4 +1,3 @@
-import { error } from "node:console";
 class AppError extends Error {
     statusCode:number;
     status:string;

@@ -1,8 +1,7 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/sequelize";
-import { Users } from "./user.model";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/sequelize';
 const User_Profile = sequelize.define(
-  "Users_Profile",
+  'Users_Profile',
   {
     id: {
       type: DataTypes.UUID,
@@ -14,7 +13,7 @@ const User_Profile = sequelize.define(
       type: DataTypes.UUID,
       references:{
         model:'Users',
-        key:"id"
+        key:'id'
       },
       allowNull: false,
     },
@@ -64,7 +63,7 @@ const User_Profile = sequelize.define(
   },
   {
     timestamps: true,
-    tableName: "Users_Profile",
+    tableName: 'Users_Profile',
   },
 
 );

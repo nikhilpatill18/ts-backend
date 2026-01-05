@@ -1,10 +1,10 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../db/sequelize";
-import { User_Profile } from "./user_profile.model";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/sequelize';
+import { User_Profile } from './user_profile.model';
 import  bcryptjs from 'bcryptjs'
 
 const Users  = sequelize.define(
-  "Users",
+  'Users',
   {
     id: {
       type: DataTypes.UUID,
@@ -38,8 +38,8 @@ const Users  = sequelize.define(
       type: DataTypes.VIRTUAL,
       get() {
         // NOTE: normal function, NOT arrow
-        const firstName = this.getDataValue("firstName");
-        const lastName = this.getDataValue("lastName");
+        const firstName = this.getDataValue('firstName');
+        const lastName = this.getDataValue('lastName');
         return `${firstName} ${lastName}`;
       },
     },
@@ -64,9 +64,9 @@ const Users  = sequelize.define(
   },
   {
     timestamps: true,
-    tableName: "Users",
+    tableName: 'Users',
     hooks:{
-      beforeCreate:async(user:any,options)=>{
+      beforeCreate:async(user:any)=>{
         user.password=await bcryptjs.hash(user.password,10)
       }
     }
@@ -74,14 +74,15 @@ const Users  = sequelize.define(
 );
 
 
+
 Users.hasOne(User_Profile,{
-  as:"user_details",
-  foreignKey:"user_id",
-  onDelete:"CASACDE"
+  as:'user_details',
+  foreignKey:'user_id',
+  onDelete:'CASACDE'
 });
 User_Profile.belongsTo(Users,{
-    foreignKey:"user_id",
-    as:"user"
+    foreignKey:'user_id',
+    as:'user'
 })
 
 

@@ -1,9 +1,10 @@
 import app from './app';
 import {sequelize} from './db/sequelize'
 import dotenv from 'dotenv'
-
+import redisClient from './config/redis';
 import globalerrorController from './controller/globalerror.controller';
 
+import cron from 'node-cron';
 dotenv.config()
 const PORT=process.env.PORT||4000
 
@@ -16,6 +17,7 @@ const connectDb = async (): Promise<void> => {
   }
 };
 app.listen(3001 ,'0.0.0.0', async () => { 
+  await redisClient.connect();
   console.log(`server started running on ${PORT}`);
   await connectDb();
   // await createUser();
@@ -24,6 +26,12 @@ app.listen(3001 ,'0.0.0.0', async () => {
 app.get('/',(req,res)=>{
   res.status(200).json({message:'success'})
 })
+
+// const task=cron.schedule('*/2 * * * *', async (ctx) => {
+//   // console.log(ctx);   
+//   console.log('Running a task every 2minute');
+// });
+
 
 // auth routes
 
