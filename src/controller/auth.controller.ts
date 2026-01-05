@@ -7,7 +7,19 @@ import dotenv from 'dotenv'
 import { userData,UserDetails } from "../types/user";
 import AppError from "../utils/appError";
 import { generateOtp } from "../utils/generateotp";
+import nodemailer from 'nodemailer';
 dotenv.config();
+
+const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: Number(process.env.EMAIL_PORT),
+            secure: true, // true for port 465
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        })
+
 
 
 const createSendCookie = async (res: Response, user: userData,message:string,status?:number) => {
@@ -65,8 +77,9 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
 
     // check the password is correct or not
     const isUser = await bcryptjs.compare(data.password,user.password);
+     
     if (!isUser)  
-     return next(new AppError("Unauthorized Request",401));
+     return next(new AppError("Password is incorrect",401));
       
     // check the profile completed
     const isProfileCompleted=user.isProfileCompleted;
@@ -76,6 +89,8 @@ const login = async (req: Request, res: Response,next:NextFunction) => {
     
     // make the user password undifned before sending the response
     user.password = undefined;
+    user.otp=undefined;
+    user.otpExpiry=undefined;
     // create the token and send to yuser
     createSendCookie(res,user,"User login successfully")
   } 
@@ -97,13 +112,81 @@ const send_otp=async(req:Request,res:Response,next:NextFunction)=>{
     // generate thye opt 
     const otp:string=generateOtp();
     const userData=await Users.findOne<userData|any>({where:{id:user.id},include:{model:User_Profile,as:"user_details"}});
+    console.log(userData.get('fullName'));
+    
     userData.otp=otp;
     userData.otpExpiry=Date.now()+60000;
-    userData?.save();
-    console.log(otp);
+    console.log("Save OTP",otp);
+    console.log("userData",userData.get('fullName'));
     
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: userData.dataValues.email,
+      subject: "Confirm OTP",
+      html: `<html lang="en" style="font-family: Arial, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
+      <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>OTP Verification</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f5f7fa;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa; padding: 20px 0;">
+      <tr>
+      <td alignment="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+      
+      <!-- Header -->
+      <tr>
+      <td style="background-color: #007bff; padding: 20px; text-align: center; color: #ffffff; font-size: 24px; font-weight: bold;">
+      Flexora
+      </td>
+      </tr>
+      
+      <!-- Body -->
+      <tr>
+      <td style="padding: 30px; color: #333333;">
+      <p style="font-size: 18px; margin: 0 0 10px;">Hello <strong>${userData.get('fullName')}</strong>,</p>
+      <p style="font-size: 16px; margin: 0 0 20px; line-height: 1.5;">
+      We received a request to verify your identity. Please use the OTP below to complete your verification.
+      </p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+      <div style="display: inline-block; padding: 15px 30px; background-color: #f0f4ff; border: 1px solid #d0d7ff; border-radius: 8px; font-size: 32px; letter-spacing: 4px; font-weight: bold; color: #007bff;">
+      ${otp}
+      </div>
+      </div>
+      
+      <p style="font-size: 14px; color: #666666; margin: 20px 0 0;">
+      This OTP is valid for the next <strong>5 minutes</strong>. Please do not share it with anyone for security reasons.
+      </p>
+      
+      <p style="font-size: 14px; color: #666666; margin: 10px 0 0;">
+      If you did not request this, please ignore this email or contact our support team immediately.
+      </p>
+      </td>
+      </tr>
+      
+      <!-- Footer -->
+      <tr>
+      <td style="background-color: #f8f9fa; padding: 15px; text-align: center; color: #999999; font-size: 12px;">
+      © 2025 Flexora. All rights reserved.
+      </td>
+      </tr>
+      
+      </table>
+      </td>
+      </tr>
+      </table>
+      </body>
+      </html>
+      `,
+    });
+    console.log("Before Saving");
+    userData?.save();
+    console.log("After Saving");
     return res.status(200).json({message:"Otp Shared SUccessFully"})
   } catch (error) {
+    console.log(error);
     next(new AppError("Error in otp",500));
   }
 }
@@ -228,9 +311,10 @@ const authME=async(req:Request,res:Response,next:NextFunction)=>{
      }});
    if(!user)
     next(new AppError("User not found",404));
-    
     // make the user password undifned before sending the response
     user.password=undefined;
+    user.otp=undefined;
+    user.otpExpiry=undefined;
     // return the response
     return res.status(200).json({message:"success",data:user})
   } catch (error) {

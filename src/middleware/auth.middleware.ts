@@ -9,7 +9,7 @@ const secret:string|any=process.env.JWT_SECERET
 const authMiddleware=async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const token=req.cookies.jwt||req.headers.authorization?.replace("Bearer ","");
-        console.log(req);
+        // console.log(req);
         
         if(!token) return res.status(401).json({success:false,message:"Unauthorized token"});
 

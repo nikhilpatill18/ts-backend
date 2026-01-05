@@ -21,6 +21,10 @@ app.listen(3001 ,"0.0.0.0", async () => {
   // await createUser();
 });
 
+app.get('/',(req,res)=>{
+  res.status(200).json({message:"success"})
+})
+
 // auth routes
 
 

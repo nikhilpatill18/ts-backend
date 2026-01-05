@@ -27,6 +27,8 @@ interface userData {
   email: string;
   password?: string|undefined;
   isVerified:boolean;
+  otp?:string|undefined;
+  otpExpiry?:string|undefined;
   isProfileCompleted:boolean;
   user_details?:UserDetails
   createdAt?: Date;

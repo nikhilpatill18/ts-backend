@@ -1,8 +1,9 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../db/sequelize";
 import { User_Profile } from "./user_profile.model";
+import  bcryptjs from 'bcryptjs'
 
-const Users = sequelize.define(
+const Users  = sequelize.define(
   "Users",
   {
     id: {
@@ -64,8 +65,14 @@ const Users = sequelize.define(
   {
     timestamps: true,
     tableName: "Users",
+    hooks:{
+      beforeCreate:async(user:any,options)=>{
+        user.password=await bcryptjs.hash(user.password,10)
+      }
+    }
   },
 );
+
 
 Users.hasOne(User_Profile,{
   as:"user_details",
